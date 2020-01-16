@@ -2,17 +2,16 @@ from blackbox37 import check
 
 
 class Individu:
-    def __init__(self, length_max, length_min,g):
-        self.length_max = length_max
-        self.length_min = length_min
+    def __init__(self,g):
         self.fitness = -1
         #generer taille aleatoire
-        self.genotype = g
-        self.fitness = check(4,self.genotype.phenotype)
+        self.bio = g
+        self.fitness = check(4,self.bio.phenotype)
 
 
 
-
+    def setFitt(self):
+        self.fitness = check(4, self.bio.phenotype)
 
 
 

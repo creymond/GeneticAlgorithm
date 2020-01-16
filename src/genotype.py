@@ -3,6 +3,8 @@
 import random
 from configuration import *
 
+from src.configuration import PARAMETERS
+
 
 class Genotype:
     def __init__(self, length):
