@@ -1,6 +1,38 @@
 # chaîne de int (changer char en int avec orb())
 # mutation
+import random
+
 
 class Genotype:
-    def __init__(self):
-        pass
+    def __init__(self, length):
+        self.length_max = length
+        self.genotype = []
+        self.phenotype = []
+        self.initialize_phenotype()
+        self.initialize_genotype()
+
+    def initialize_phenotype(self):
+        for i in range(self.length_max):
+            self.phenotype.append(self.generate_gene())
+
+    def initialize_genotype(self):
+        for i in range(len(self.phenotype)):
+            self.genotype.append(ord(self.phenotype[i]))
+
+    def generate_gene(self):
+        nb = random.randint(48, 57)
+        letter = random.randint(65, 90)
+        value = random.choice([nb, letter])
+        return chr(value)
+
+    def replace_char(self):
+        for i in range(len(self.genotype)):
+            self.genotype[i] = ord(self.genotype[i])
+
+
+if __name__ == "__main__":
+    g = Genotype(18)
+    print(g.phenotype)
+    print(g.genotype)
+    # 48 - 57 : numbers
+    # 65 - 90 : letters
