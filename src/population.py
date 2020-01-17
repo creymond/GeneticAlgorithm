@@ -1,94 +1,104 @@
-from operator import itemgetter
 import random
-from algorithm import Individu
-import numpy as np
-
-from genotype import Genotype
+from individu import Individu
+from adn import Adn
+from configuration import *
+import heapq
 
 
 class Population:
-    def __init__(self, nb, percent, muta, cross):
+    def __init__(self):
         self.individus = []
         self.individusBest = []
-        self.percent = percent
-        self.nb = nb
-        self.muta = muta
-        self.cross = cross
-        for lettre in range(nb):
-            r = random.randint(12, 18);
-            g = Genotype(r)
-            ind = Individu( g)
-            self.individus.append(ind)
-        self.evaluation()
+        self.percentage_selection = PARAMETERS['population_best']
+        self.pop = PARAMETERS['population']
+        self.pop_best = PARAMETERS['population_best']
+        self.mutation_threshold = PARAMETERS['mutation']
+        self.crossover_threshold = PARAMETERS['crossover']
+        self.adn = Adn()
 
-    def cross_over(self,bbyoda1 ,bbyoda2):
-        lengthmin =bbyoda1.bio.length_max
-        if bbyoda2.bio.length_max<lengthmin:
-            lengthmin=bbyoda2.bio.length_max
+    def initialize_population(self):
+        for i in range(self.pop):
+            phenotype = self.adn.generate_phenotype()
+            genotype = self.adn.generate_genotype(phenotype)
+            individu = Individu(genotype, phenotype)
+            self.individus.append(individu)
 
-        crossLen = random.randint(1,round((lengthmin-1)*0.75))
+    def fitness_max(self):
+        m_fitness = 0
+        m_phenotype = None
+        m_genotype = None
+        for i in self.individus:
+            if i.fitness >= m_fitness:
+                m_fitness = i.fitness
+                m_phenotype = i.phenotype
+                m_genotype = i.genotype
+        return m_fitness, m_phenotype, m_genotype
 
-        genYoda1=bbyoda1.bio.genotype
-        genYoda2 = bbyoda2.bio.genotype
+    def compute_fitness(self):
+        for i in self.individus:
+            i.compute_fitness()
 
-        genYoda1=genYoda2[:crossLen]+genYoda1[crossLen:]
-        genYoda2=genYoda1[:crossLen]+genYoda2[crossLen:]
-        print("genYoda1",genYoda1)
-        bbyoda1.bio.genotype=genYoda1
-        bbyoda2.bio.genotype = genYoda2
+    def run(self):
+        generation = 0
+        fitness_max = 0
+        iteration = 0
+        self.initialize_population()
+        while fitness_max != 1:
+            self.compute_fitness()
+            fitness_max, best_phenotype, best_genotype = self.fitness_max()
+            print("Generation ", generation, "| Best fitness : ", fitness_max, " with (", best_phenotype, ", ",
+                  best_genotype, ")")
+            best = self.get_best_individus()
+            new_genotypes = self.cross_over(best)
+            self.individus.clear()
+            for i in new_genotypes:
+                phenotype = self.adn.update_phenotype(i)
+                individu = Individu(i, phenotype)
+                self.individus.append(individu)
+            generation += 1
+            iteration += 1
 
+    def get_best_individus(self):
+        best_genotypes = []
+        fitness = []
+        for i in range(len(self.individus)):
+            fitness.append(self.individus[i].fitness)
+        index = heapq.nlargest(self.pop_best, range(len(fitness)), fitness.__getitem__)
+        for i in index:
+            best_genotypes.append(self.individus[i].genotype)
+        return best_genotypes
 
-    def generate_child(self, maman, papa):
+    def cross_over(self, best):
+        children_produced = 1
+        children = [best[0], best[1]]  # elitism
+        while children_produced < self.pop:
+            parents = random.sample(best, 2)
+            rand = random.random()
+            if rand <= self.crossover_threshold:
+                dad = parents[0]
+                mom = parents[1]
 
-        randcross = random.random()
-        child1 = maman
-        child2 = papa
-        if randcross <= self.cross:
-            self.cross_over(child1,child2)
-            print("cross")
-        # child 1 mutation
-        child1.bio.mutation()
-        print("3", child1.bio.genotype)
-        # child 2 muation
-        child2.bio.mutation()
-        print("4", child2.bio.genotype)
-        child1.setFitt()
-        print("5", child1.bio.genotype)
-        child2.setFitt()
+                # Apply cross-over
+                baby_yoda = dad[:6] + mom[6:]
+                master_yoda = mom[:6] + dad[6:]
 
-        print("6", child1.bio.genotype)
-        self.individus.append(child1)
-        self.individus.append(child2)
+                # Appy mutation
+                baby_yoda_mut = self.mutation(baby_yoda)
+                master_yoda_mut = self.mutation(master_yoda)
 
-    def generate_newPop(self):
-        self.individus.clear()
-        while len(self.individus) < self.nb+2:
-            rmaman = random.randint(0, len(self.individusBest)-1)
-            rpapa = random.randint(0, len(self.individusBest)-1)
-            self.generate_child(self.individusBest[rmaman], self.individusBest[rpapa])
-            # clean elite
-        self.individusBest.clear()
-        self.evaluation()
+                # Save the children
+                children.append(baby_yoda_mut)
+                children.append(master_yoda_mut)
+                children_produced += 2
+        return children
 
-    def evaluation(self):
-        lst = []
-        for ind in self.individus:
-            tulple = (ind, ind.fitness)
-            lst.append(tulple)
-
-        i = 0
-        print("Gen")
-        while i <= (len(self.individus) * self.percent):
-            tulpleM = max(lst, key=itemgetter(1))
-            self.individusBest.append(tulpleM[0])
-            print(tulpleM[0].fitness)
-            print(tulpleM[0].bio.phenotype)
-            lst.remove(tulpleM)
-            i += 1
-
-
-if __name__ == "__main__":
-    pop = Population(20, 0.05, 0.5, 0.85)
-    pop.generate_newPop()
-    # pop.generatenew pop
-    #
+    def mutation(self, genotype):
+        new_genotype = []
+        for i in range(len(genotype)):
+            rand = random.random()
+            if rand <= self.mutation_threshold:
+                new_gene = self.adn.generate_gene(gene=True)
+                new_genotype.append(new_gene)
+            else:
+                new_genotype.append(genotype[i])
+        return new_genotype
