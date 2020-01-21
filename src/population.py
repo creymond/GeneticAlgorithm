@@ -43,11 +43,11 @@ class Population:
         fitness_max = 0
         iteration = 0
         self.initialize_population()
-        while fitness_max != 1:
+        while iteration < 1000: #fitness_max != 1:
+            print('Generation :', iteration)
             self.compute_fitness()
             fitness_max, best_phenotype, best_genotype = self.fitness_max()
-            print("Generation ", generation, "| Best fitness : ", fitness_max, " with (", best_phenotype, ", ",
-                  best_genotype, ")")
+            print("Generation ", generation, "| Best fitness : ", fitness_max, " | Password : ",self.display_password(best_phenotype))
             best = self.get_best_individus()
             new_genotypes = self.cross_over(best)
             self.individus.clear()
@@ -69,27 +69,32 @@ class Population:
         return best_genotypes
 
     def cross_over(self, best):
-        children_produced = 1
-        children = [best[0], best[1]]  # elitism
+        children_produced = 2
+        children = [best[0], best[0]]   # elitism
         while children_produced < self.pop:
             parents = random.sample(best, 2)
             rand = random.random()
+            dad = parents[0]
+            mom = parents[1]
             if rand <= self.crossover_threshold:
-                dad = parents[0]
-                mom = parents[1]
+                point = random.randint(1, 4)
+                c = list(zip(dad[point:], mom[point:]))
+                random.shuffle(c)
+                dad_s, mom_s = zip(*c)
 
                 # Apply cross-over
-                baby_yoda = dad[:6] + mom[6:]
-                master_yoda = mom[:6] + dad[6:]
+                child1 = dad[:point] + list(mom_s)
+                child2 = mom[:point] + list(dad_s)
+            else:
+                child1 = dad
+                child2 = mom
 
-                # Appy mutation
-                baby_yoda_mut = self.mutation(baby_yoda)
-                master_yoda_mut = self.mutation(master_yoda)
-
-                # Save the children
-                children.append(baby_yoda_mut)
-                children.append(master_yoda_mut)
-                children_produced += 2
+            baby_yoda = self.mutation(child1)
+            master_yoda = self.mutation(child2)
+            # Save the children
+            children.append(baby_yoda)
+            children.append(master_yoda)
+            children_produced += 2
         return children
 
     def mutation(self, genotype):
@@ -101,4 +106,11 @@ class Population:
                 new_genotype.append(new_gene)
             else:
                 new_genotype.append(genotype[i])
+
         return new_genotype
+
+    def display_password(self, phenotype):
+        password = ""
+        for i in phenotype:
+            password += i
+        return password
