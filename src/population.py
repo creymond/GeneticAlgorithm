@@ -52,7 +52,9 @@ class Population:
             print('Generation :', iteration)
             self.compute_fitness()
             fitness_max, best_phenotype, best_genotype = self.fitness_max()
-            print("Generation ", generation, "| Best fitness : ", fitness_max, " | Password : ",self.display_password(best_phenotype))
+            print("Generation ", generation, "| Best fitness : ", fitness_max,
+                  " | Password : ", self.display_password(best_phenotype),
+                  ' | Size : ', len(best_phenotype))
             best = self.get_best_individus()
             new_genotypes = self.cross_over(best)
             self.individus.clear()
