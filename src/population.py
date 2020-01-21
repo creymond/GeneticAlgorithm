@@ -14,6 +14,10 @@ class Population:
         self.pop_best = PARAMETERS['population_best']
         self.mutation_threshold = PARAMETERS['mutation']
         self.crossover_threshold = PARAMETERS['crossover']
+        self.muta_supr = PARAMETERS['muta_suppr']
+        self.muta_add = PARAMETERS['muta_add']
+        self.length_min = PARAMETERS['length_min']
+        self.length_max = PARAMETERS['length_max']
         self.adn = Adn()
 
     def initialize_population(self):
@@ -39,11 +43,12 @@ class Population:
             i.compute_fitness()
 
     def run(self):
+
         generation = 0
         fitness_max = 0
         iteration = 0
         self.initialize_population()
-        while iteration < 1000: #fitness_max != 1:
+        while fitness_max != 1: #fitness_max != 1:
             print('Generation :', iteration)
             self.compute_fitness()
             fitness_max, best_phenotype, best_genotype = self.fitness_max()
@@ -66,47 +71,66 @@ class Population:
         index = heapq.nlargest(self.pop_best, range(len(fitness)), fitness.__getitem__)
         for i in index:
             best_genotypes.append(self.individus[i].genotype)
+
+        for i in range(5):
+            y=random.choice(self.individus)
+            best_genotypes.append(y.genotype)
         return best_genotypes
 
     def cross_over(self, best):
-        children_produced = 2
-        children = [best[0], best[0]]   # elitism
+        children_produced = 1
+        children = [best[0]]  # elitism
+
         while children_produced < self.pop:
             parents = random.sample(best, 2)
             rand = random.random()
             dad = parents[0]
             mom = parents[1]
             if rand <= self.crossover_threshold:
-                point = random.randint(1, 4)
-                c = list(zip(dad[point:], mom[point:]))
-                random.shuffle(c)
-                dad_s, mom_s = zip(*c)
-
+                dad = parents[0]
+                mom = parents[1]
+                lengthmin = len(dad)
+                if len(mom) < lengthmin:
+                    lengthmin = len(mom)
+                lengthmin = random.randint(1, round((lengthmin - 1) *0.75))
                 # Apply cross-over
-                child1 = dad[:point] + list(mom_s)
-                child2 = mom[:point] + list(dad_s)
+                baby_yoda = dad[:lengthmin] + mom[lengthmin:]
+                master_yoda = mom[:lengthmin] + dad[lengthmin:]
             else:
-                child1 = dad
-                child2 = mom
+                baby_yoda = parents[0]
+                master_yoda = parents[1]
+            # Appy mutation
+            baby_yoda_mut = self.mutation(baby_yoda)
+            master_yoda_mut = self.mutation(master_yoda)
 
-            baby_yoda = self.mutation(child1)
-            master_yoda = self.mutation(child2)
             # Save the children
-            children.append(baby_yoda)
-            children.append(master_yoda)
+            children.append(baby_yoda_mut)
+            children.append(master_yoda_mut)
             children_produced += 2
         return children
 
     def mutation(self, genotype):
         new_genotype = []
-        for i in range(len(genotype)):
+        lGen=len(genotype)
+        for i in range(lGen):
             rand = random.random()
             if rand <= self.mutation_threshold:
-                new_gene = self.adn.generate_gene(gene=True)
-                new_genotype.append(new_gene)
+                r2=random.random()
+
+                if(r2<=self.muta_supr or lGen<=self.length_min):
+
+                    new_gene = self.adn.generate_gene(gene=True)
+                    new_genotype.append(new_gene)
+                else:
+                    lGen-=1
+                    pass
             else:
                 new_genotype.append(genotype[i])
-
+        r3 = random.random()
+        if r3<=self.muta_add and lGen<self.length_max:
+            new_gene = self.adn.generate_gene(gene=True)
+            new_genotype.append(new_gene)
+            #print("+")
         return new_genotype
 
     def display_password(self, phenotype):
