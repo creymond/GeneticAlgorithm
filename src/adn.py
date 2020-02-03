@@ -32,6 +32,6 @@ class Adn:
 
     def update_phenotype(self, genotype):
         phenotype = []
-        for i in genotype:
-            phenotype.append(chr(i))
+        for i in range(len(genotype)):
+            phenotype.append(chr(genotype[i]))
         return phenotype
