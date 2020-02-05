@@ -13,6 +13,7 @@ class Genetic3:
         self.individus = []
         self.population1 = []
         self.population2 = []
+        self.population_number = PARAMETERS['population_number']
         self.percentage_selection = PARAMETERS['population_best']
         self.pop = PARAMETERS['population']
         self.pop_best = PARAMETERS['population_best']
@@ -62,38 +63,35 @@ class Genetic3:
     def run(self):
         generation = 0
         fitness_max = 0
-        self.population1 = self.initialize_population()
-        self.population2 = self.initialize_population()
+        populations = []
+
+        for i in range(self.population_number):
+            new_pop = self.initialize_population()
+            populations.append(new_pop)
 
         while generation <= self.merge:
-            self.compute_fitness_pop1()
-            self.compute_fitness_pop2()
-            best_pop1 = self.selection(self.population1)
-            best_pop2 = self.selection(self.population2)
-            cross_pop1 = self.cross_over(best_pop1)
-            cross_pop2 = self.cross_over(best_pop2)
-            self.population1.clear()
-            self.population2.clear()
-            for i in cross_pop1:
-                phenotype = self.adn.update_phenotype(i)
-                individu = Individu(i, phenotype)
-                self.population1.append(individu)
-
-            for i in cross_pop2:
-                phenotype = self.adn.update_phenotype(i)
-                individu = Individu(i, phenotype)
-                self.population2.append(individu)
-
+            index = 0
+            for i in populations:
+                for j in i:
+                    j.compute_fitness()
+                best_pop = self.selection(i)
+                cross_pop = self.cross_over(best_pop)
+                new_generation = []
+                for k in cross_pop:
+                    phenotype = self.adn.update_phenotype(k)
+                    individu = Individu(k, phenotype)
+                    new_generation.append(individu)
+                populations[index] = new_generation
+                index += 1
             generation += 1
 
-        self.individus = self.population1 + self.population2
+        for i in populations:
+            self.individus += i
+
         print("Merged")
         while fitness_max != 1:
             self.compute_fitness_pop_final()
             fitness_max, best_phenotype, best_genotype = self.fitness_max()
-            print("Generation ", generation, "| Best fitness : ", fitness_max,
-                  " | Password : ", self.display_password(best_phenotype),
-                  ' | Size : ', len(best_phenotype))
             best = self.selection(self.individus)
             new_genotypes = self.cross_over(best)
             self.individus.clear()
@@ -101,9 +99,17 @@ class Genetic3:
                 phenotype = self.adn.update_phenotype(i)
                 individu = Individu(i, phenotype)
                 self.individus.append(individu)
-            self.x.append(fitness_max)
-            self.plot_evolution(self.x)
+            # self.x.append(fitness_max)
+            # self.plot_evolution(self.x)
             generation += 1
+            if generation == 1000:
+                break
+        if fitness_max == 1:
+            print('Solution found after ', generation, ' generations')
+            return 1
+        else:
+            print('No solution found before 1000 generations, max fitness : ', fitness_max)
+            return -1
 
     def selection(self, population):
         best_genotypes = []
@@ -151,20 +157,19 @@ class Genetic3:
         return children
 
     def mutation(self, genotype):
-        # 4 mutations possibles si threshold atteint
         size = len(genotype)
         rand = random.random()
         if rand <= self.mutation_threshold:
             rand_mut = random.random()
 
             # Single gene modification
-            if rand_mut <= 0.25:
+            if rand_mut <= 0.70:
                 position = random.randint(0, size - 1)
                 new_gene = self.adn.generate_gene(gene=True)
                 genotype[position] = new_gene
 
             # Swap two genes
-            elif rand_mut <= 0.5:
+            elif rand_mut <= 0.80:
                 positions = random.sample(range(0, size - 1), 2)
                 pos1 = positions[0]
                 pos2 = positions[1]
@@ -173,17 +178,31 @@ class Genetic3:
                 genotype[pos2] = gene1
 
             # Add one gene
-            elif rand_mut <= 0.75:
+            elif rand_mut <= 0.90:
                 if size < self.length_max:
                     position = random.randint(0, size - 1)
                     new_gene = self.adn.generate_gene(gene=True)
                     genotype.insert(position, new_gene)
+                else:
+                    positions = random.sample(range(0, size - 1), 2)
+                    pos1 = positions[0]
+                    pos2 = positions[1]
+                    gene1 = genotype[pos1]
+                    genotype[pos1] = genotype[pos2]
+                    genotype[pos2] = gene1
 
             # Delete one gene
             else:
                 if size > 12:
                     position = random.randint(0, size - 1)
                     genotype.pop(position)
+                else:
+                    positions = random.sample(range(0, size - 1), 2)
+                    pos1 = positions[0]
+                    pos2 = positions[1]
+                    gene1 = genotype[pos1]
+                    genotype[pos1] = genotype[pos2]
+                    genotype[pos2] = gene1
         return genotype
 
     def display_password(self, phenotype):
