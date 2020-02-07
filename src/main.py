@@ -1,10 +1,11 @@
 from genetic1 import Genetic1
 from genetic2 import Genetic2
 from genetic3 import Genetic3
+from genetic4 import Genetic4
 
 if __name__ == "__main__":
-    algo = 3
-    number_test = 10
+    algo = 4
+    number_test = 1
 
     if algo == 1:
         gen1 = Genetic1()
@@ -12,6 +13,9 @@ if __name__ == "__main__":
     elif algo == 2:
         gen2 = Genetic2()
         gen2.run()
+    elif algo == 4:
+        gen4 = Genetic4()
+        gen4.run()
     elif algo == 3:
         max = 10
         j = 0
