@@ -30,6 +30,7 @@ class Adn:
         else:
             return chr(value)
 
+    # Generate new phenotype corresponding to the given genotype
     def update_phenotype(self, genotype):
         phenotype = []
         for i in range(len(genotype)):

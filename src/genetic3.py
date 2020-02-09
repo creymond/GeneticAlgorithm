@@ -99,17 +99,15 @@ class Genetic3:
                 phenotype = self.adn.update_phenotype(i)
                 individu = Individu(i, phenotype)
                 self.individus.append(individu)
-            # self.x.append(fitness_max)
-            # self.plot_evolution(self.x)
             generation += 1
             if generation == 1000:
                 break
         if fitness_max == 1:
             print('Solution found after ', generation, ' generations')
-            return 1
+            return 1, generation
         else:
             print('No solution found before 1000 generations, max fitness : ', fitness_max)
-            return -1
+            return -1, -1
 
     def selection(self, population):
         best_genotypes = []
@@ -125,6 +123,7 @@ class Genetic3:
                 break
         return best_genotypes
 
+    # Uniform crossover
     def cross_over(self, best):
         children_produced = 1
         children = [best[0]]
@@ -156,6 +155,7 @@ class Genetic3:
                 children_produced += 1
         return children
 
+    # Perform single mutation per genotype
     def mutation(self, genotype):
         size = len(genotype)
         rand = random.random()
@@ -183,26 +183,12 @@ class Genetic3:
                     position = random.randint(0, size - 1)
                     new_gene = self.adn.generate_gene(gene=True)
                     genotype.insert(position, new_gene)
-                else:
-                    positions = random.sample(range(0, size - 1), 2)
-                    pos1 = positions[0]
-                    pos2 = positions[1]
-                    gene1 = genotype[pos1]
-                    genotype[pos1] = genotype[pos2]
-                    genotype[pos2] = gene1
 
             # Delete one gene
             else:
                 if size > 12:
                     position = random.randint(0, size - 1)
                     genotype.pop(position)
-                else:
-                    positions = random.sample(range(0, size - 1), 2)
-                    pos1 = positions[0]
-                    pos2 = positions[1]
-                    gene1 = genotype[pos1]
-                    genotype[pos1] = genotype[pos2]
-                    genotype[pos2] = gene1
         return genotype
 
     def display_password(self, phenotype):
